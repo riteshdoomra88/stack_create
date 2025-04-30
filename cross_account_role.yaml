@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cross-account IAM role to allow your platform to assume and perform read-only security analysis"
+
+Parameters:
+  PlatformAWSAccountId:
+    Type: String
+    Description: "Your Platform AWS Account ID (12-digit number)"
+
+Resources:
+  PlatformAccessRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "PlatformAccessRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${PlatformAWSAccountId}:root"
+            Action: "sts:AssumeRole"
+      MaxSessionDuration: 43200
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/SecurityAudit
+        - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+      Policies:
+        - PolicyName: PlatformExtraReadOnlyAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'account:Get*'
+                  - 'appstream:Describe*'
+                  - 'appstream:List*'
+                  - 'backup:List*'
+                  - 'bedrock:List*'
+                  - 'bedrock:Get*'
+                  - 'cloudtrail:GetInsightSelectors'
+                  - 'codeartifact:List*'
+                  - 'codebuild:BatchGet*'
+                  - 'codebuild:ListReportGroups'
+                  - 'cognito-idp:GetUserPoolMfaConfig'
+                  - 'dlm:Get*'
+                  - 'drs:Describe*'
+                  - 'ds:Get*'
+                  - 'ds:Describe*'
+                  - 'ds:List*'
+                  - 'dynamodb:GetResourcePolicy'
+                  - 'ec2:GetEbsEncryptionByDefault'
+                  - 'ec2:GetSnapshotBlockPublicAccessState'
+                  - 'ec2:GetInstanceMetadataDefaults'
+                  - 'ecr:Describe*'
+                  - 'ecr:GetRegistryScanningConfiguration'
+                  - 'elasticfilesystem:DescribeBackupPolicy'
+                  - 'glue:GetConnections'
+                  - 'glue:GetSecurityConfiguration*'
+                  - 'glue:SearchTables'
+                  - 'lambda:GetFunction*'
+                  - 'logs:FilterLogEvents'
+                  - 'lightsail:GetRelationalDatabases'
+                  - 'macie2:GetMacieSession'
+                  - 'macie2:GetAutomatedDiscoveryConfiguration'
+                  - 's3:GetAccountPublicAccessBlock'
+                  - 'shield:DescribeProtection'
+                  - 'shield:GetSubscriptionState'
+                  - 'securityhub:BatchImportFindings'
+                  - 'securityhub:GetFindings'
+                  - 'servicecatalog:Describe*'
+                  - 'servicecatalog:List*'
+                  - 'ssm:GetDocument'
+                  - 'ssm-incidents:List*'
+                  - 'states:ListTagsForResource'
+                  - 'support:Describe*'
+                  - 'tag:GetTagKeys'
+                  - 'wellarchitected:List*'
+                Resource: '*'
+        - PolicyName: PlatformApiGatewayReadAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'apigateway:GET'
+                Resource: 'arn:aws:apigateway:*::/restapis/*'
+
+Outputs:
+  RoleArn:
+    Description: "The ARN of the cross-account role"
+    Value: !GetAtt PlatformAccessRole.Arn
